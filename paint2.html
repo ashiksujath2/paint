@@ -1,0 +1,227 @@
+<!DOCTYPE HTML>
+<html>
+  <head><title>HTML5 canvas Paint</title>
+  <script src="http://code.jquery.com/jquery-1.8.3.js"></script>
+  <link type="text/css" rel="stylesheet" href="/css/main.css" /> 
+  </head>
+<body>
+<div align="center">
+<div>
+  <canvas id="pCanvas" width="500" height="400"></canvas>
+  <canvas id="tCanvas" width="500" height="400" ></canvas>
+</div>
+<div id="input">
+<input type="button" value="LINE"   onClick="line()"   id="line"></input>
+<input type="button" value="CIRCLE" onClick="circle()" id="circle"></input>
+<input type="button" value="PENCIL" onClick="pencil()" id="pencil"></input>
+<input type="button" value="RECTANGLE" onClick="rectangle()" id="rectangle"></input>
+<input type="button" value = "RESET" onClick="reset()" ></input>
+<input type="text" id="fileName"></input>
+<input type="button" value="SAVE"   onClick="postJson()"></input>
+</div>
+
+<div id="colour">
+<input style="background:#000000;" onclick="colour('#000000')"  type="button"><br>
+<input style="background:#FF0000;" onclick="colour('#FF0000')"  type="button"><br>
+<input style="background:#FF0066;" onclick="colour('#FF0066')"  type="button"><br>
+<input style="background:#0000FF;" onclick="colour('#0000FF')"  type="button"><br>
+<input style="background:#00FF00;" onclick="colour('#00FF00')"  type="button"><br>
+<input style="background:#FFFF00;" onclick="colour('#FFFF00')"  type="button"><br>
+<input style="background:#99CCFF;" onclick="colour('#99CCFF')"  type="button">
+</div>
+</div>
+
+<div id="save">
+<strong>Saved Files:</strong>
+  {% for file in files %}
+      <p><a href="/{{ file.filename }}">{{file.filename}}</a></p>
+  {% endfor %}
+</div>
+<div id="dispName">{{name}}</div>
+
+<script>
+	canvas = document.getElementById('tCanvas');
+	pcanvas = document.getElementById('pCanvas')
+   context = canvas.getContext('2d');
+	pcontext = pcanvas.getContext('2d')
+	tool = undefined 
+	save = []
+	jsonobj = {}
+	saved_data={{data}}
+	if (saved_data!="Not Found"){ my_draw()}
+function colour(c){context.fillStyle = c||"black";}
+	
+function postJson(){
+	$.post("/",{image:JSON.stringify(save),fnam:document.getElementById("fileName").value},
+         function(data,status) {document.write(data)});}
+function getcord(e) {
+	var bound = canvas.getBoundingClientRect();
+	return {
+		x:e.clientX - bound.left,
+		y:e.clientY - bound.top}
+}
+function reset(){
+	pcanvas.width = 500;
+	canvas.width = 500;
+	save = []
+}
+	
+function rectangle() { 
+	tool = "rect"
+	canvas.addEventListener('mousedown',rect1,false);
+	canvas.addEventListener('mousemove', rect2, false);
+   canvas.addEventListener('mouseup', closetool, false);
+	}
+function rect1(evt) {
+	rx = getcord(evt).x
+	ry = getcord(evt).y
+	flag = true
+	jsonobj.tool = "rect"
+	jsonobj.x1 = rx
+	jsonobj.y1 = ry
+	}
+function rect2(evt) {
+    if (flag && tool == "rect") {
+	var x = getcord(evt).x
+	var y = getcord(evt).y
+	context.clearRect(0,0,canvas.width,canvas.height)
+	context.fillRect(rx,ry,x-rx,y-ry);
+	jsonobj.width = x-rx
+	jsonobj.height = y-ry
+	jsonobj.colour = context.fillStyle
+	}}
+  
+function closetool(evt) {
+ 	flag = false;
+	pcontext.drawImage(canvas, 0, 0);
+	context.clearRect(0,0,canvas.width,canvas.height)
+	save.push(jsonobj)
+	jsonobj = {}
+	}
+	
+function line(){
+	tool = "line"
+    canvas.addEventListener('mousedown', line1, false);
+	canvas.addEventListener('mousemove',line3,false);
+	canvas.addEventListener('mouseup', closetool ,false);		
+	} 
+	
+function line1(evt) {
+	lx = getcord(evt).x
+	ly = getcord(evt).y
+	flag = true
+	jsonobj.tool="line"
+	jsonobj.x1=lx
+	jsonobj.y1=ly
+    }
+function line3(evt) {
+	if (flag && tool == "line") {
+	var xx = getcord(evt).x
+	var yy = getcord(evt).y
+	context.clearRect(0,0,canvas.width,canvas.height)
+	context.beginPath()
+	context.moveTo(lx,ly)
+	context.lineTo(xx,yy)
+	context.stroke()
+	context.closePath()
+	jsonobj.x2=xx
+	jsonobj.y2=yy
+	}}
+	
+function circle(){
+	tool = "circle"
+ 	canvas.addEventListener('mousedown',circle1,false);
+ 	canvas.addEventListener('mousemove',circle2, false);
+ 	canvas.addEventListener('mouseup', closetool, false);
+ 	}
+
+function circle1(evt){
+ 	flag = true
+	cx= getcord(evt).x
+ 	cy= getcord(evt).y
+ 	jsonobj.tool="circle"
+	jsonobj.x1=cx
+	jsonobj.y1=cy
+ 	}
+
+function circle2(evt){
+   	if (flag && tool == "circle"){
+	   var x = getcord(evt).x
+   	var y = getcord(evt).y
+   	context.clearRect(0,0,canvas.width,canvas.height)
+   	context.beginPath()
+   	radius = Math.sqrt(Math.pow (x-cx,2)+Math.pow (y-cy,2))
+   	context.arc(cx,cy,radius,0,2*Math.PI)
+   	context.fill()
+   	context.closePath()
+   	jsonobj.radius = radius
+   	jsonobj.colour = context.fillStyle
+ 	 }}
+
+function pencil() { 
+    tool = "pencil"
+    canvas.addEventListener('mousedown', pencil1, false);
+    canvas.addEventListener('mousemove', pencil2, false);
+	 canvas.addEventListener('mouseup', pencil3, false);
+    }
+		
+function pencil1(evt) {
+	px = getcord(evt).x
+	py = getcord(evt).y
+	context.moveTo(px,py)
+	context.beginPath()
+	flag = true
+   if (flag && tool == "pencil") {
+	jsonobj.tool="pencil"
+	jsonobj.buff=[]
+	jsonobj.buff.push({x1:px,y1:py})
+	}}
+function pencil2(evt) {
+	if (flag && tool == "pencil") {
+	var x = getcord(evt).x
+	var y = getcord(evt).y
+	jsonobj.buff.push({x1:x,y1:y})
+	context.lineTo(x,y);
+	context.stroke()
+	}}
+function pencil3(evt) {
+	flag = false;
+	if (jsonobj!={})
+	save.push(jsonobj)
+	jsonobj = {}
+	}
+function my_draw(){
+  while (saved_data!=[]){
+    var saved=saved_data.shift()
+    if (saved!={})
+{    pcontext.fillStyle=saved.colour
+    if (saved.tool=="circle"){
+      pcontext.beginPath()
+      pcontext.arc(saved.x1,saved.y1,saved.radius,0,2*Math.PI)
+      pcontext.fill()
+      pcontext.closePath()
+}
+    if (saved.tool=="rect"){
+      pcontext.fillRect(saved.x1,saved.y1,saved.width,saved.height);
+    }
+    if (saved.tool=="line"){
+      pcontext.beginPath()
+	   pcontext.moveTo(saved.x1,saved.y1)
+	   pcontext.lineTo(saved.x2,saved.y2)
+	   pcontext.stroke()
+	   pcontext.closePath()
+    }
+    if (saved.tool=="pencil"){
+      while(saved.buff!=[]){
+        var a=saved.buff.shift()
+        var b=saved.buff[0]
+        pcontext.beginPath()
+	     pcontext.moveTo(a.x1,a.y1)
+	     pcontext.lineTo(b.x1,b.y1)
+	     pcontext.stroke()
+	     pcontext.closePath()
+      }}}
+}}
+</script>
+</body>
+</html>

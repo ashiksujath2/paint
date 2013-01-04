@@ -1,0 +1,47 @@
+body {
+	font-family: Verdana, Helvetica, sans-serif;
+	background-color: #DDDDDD;
+	position: absolute;
+	border-top-width: thin;
+	border-right-width: thin;
+	border-bottom-width: thin;
+	border-left-width: thin;
+	border-top-style: solid;
+	border-right-style: solid;
+	border-bottom-style: solid;
+	border-left-style: solid;
+}
+canvas {
+	position: absolute;
+	left: 418px;
+	top: 52px;
+	border: 5px solid black;
+	cursor: crosshair;
+ }
+#input {
+	position: absolute;
+	left: 401px;
+	top: 471px;
+	width: 658px;
+	}
+#colour {
+	position: absolute;
+	left: 392px;
+	top: 289px;
+}
+#save {
+	position: absolute;
+	top: 59px;
+	left: 16px;
+	width: 332px;
+	height: 404px;
+}
+#dispName {
+	font-family: "Arial Black", Gadget, sans-serif;
+	font-size: 14px;
+	color: #000;
+	position: absolute;
+	left: 421px;
+	top: 20px;
+	width: 268px;
+}
